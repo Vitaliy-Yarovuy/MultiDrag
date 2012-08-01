@@ -105,7 +105,7 @@
 					його верхній лівий кут буде визначений як точка <code>new Point (0,0)</code>.
 					Для білььшості випадків <code>parent</code> element включає в собі <code>el</code>.<br/><br/>
 
-					<code>bound</code> функция яка описує граничні обмеження для переміщення обекта.
+					<code>bound</code> функция яка буде викликається при ініціалізації вона повертає функцію, яка описує граничні обмеження для переміщення обекта.
 					В модулі <code>bound.js</code> є <code>MultiDrag.boundFactory</code>фабрика для побудови базових граничних обмеженнь,
 					її використання не є необхідним, можливо передавати користувацьку функцию.<br/><br/>
 
@@ -127,7 +127,7 @@
 				<h5>Значення по замовчуванню:</h5>
 				<pre class="prettyprint linenums">
 parent: parent = MultiDrag.util.getDafaultParent(el),
-bound: MultiDrag.boundFactory(MultiDrag.boundType.element)(parent, parent),
+bound: function(){ return MultiDrag.boundFactory(MultiDrag.boundType.element)(parent, parent);} ,
 isReCalculatePosition: false,
 isReCalculateSize: false,
 isContentBoxSize: false,
@@ -421,8 +421,8 @@ getLength:mathPoint.getLength()
 				</p>
 				<h3>constructor / initialize</h3>
 				<p>
-					<code>Target(el,objs[,options])</code> Конструктор включає 3 параметра :<br/>
-					<code>el</code> - HTMLElement "кошика" який визначає розміри та позицію "DropZonе"-и <br/>
+					<code>Target(element,objs[,options])</code> Конструктор включає 3 параметра :<br/>
+					<code>element</code> - HTMLElement "кошика" який визначає розміри та позицію "DropZonе"-и <br/>
 					<code>objs</code> - масив <code>MultiDrag.Obj</code>-ів, які можуть переміщуватися в цей "кошик"
 					<code>options</code> - необов'язковий аргумент, який включає властовості що по замовчуванню визначені.
 				</p>
@@ -465,8 +465,8 @@ positioning : MultiDrag.positionFactory(MultiDrag.positionType.floatLeft)(MultiD
 				</p>
 				<h3>constructor / initialize</h3>
 				<p>
-					<code>TargetManager(el,objs,targets,options)</code> Конструктор включає 4 параметра :<br/>
-					<code>el</code> - HTMLElement який визначає робочу область <br/>
+					<code>TargetManager(element,objs,targets,options)</code> Конструктор включає 4 параметра :<br/>
+					<code>element</code> - HTMLElement який визначає робочу область <br/>
 					<code>objs</code> - масив <code>MultiDrag.Obj</code>-ів, з якими працює менеджер<br/>
 					<code>targets</code> -  масив <code>MultiDrag.Target</code>-ів, з якими працює менеджер<br/>
 					<code>options</code> - необов'язковий аргумент, який включає властовості що по замовчуванню визначені.
@@ -496,7 +496,7 @@ timeWaitForRefresh : 500
 				</p>
 				<h3>Factory</h3>
 				<p>
-					Для спрощення ініціалізації списка існує фабика <code>MultiDrag.targetManagerFactory(el,objsElements,targetElements,options)</code>. Де <code>el</code> - HTMLElement <code>parent</code>,
+					Для спрощення ініціалізації списка існує фабика <code>MultiDrag.targetManagerFactory(element,objsElements,targetElements,options)</code>. Де <code>element</code> - HTMLElement <code>parent</code>,
 					<code>objsElements</code> - масив HTMLElement-ів які будуть переміщуватия. <code>options</code> включає опциї для "кошиків" <code>target</code>, обєктів <code>obj</code> та менеджера  <code>manager</code>.<br>
 					<code>options = { obj : {...} , target : {...}, manager : {...} }</code>
 				</p>
@@ -674,18 +674,18 @@ timeWaitForRefresh : 500
 							objEls = targetAreaEl.getElementsByClassName("obj"),
 							classForTargets=["green","red","blue"];
 
-							objs = Array.prototype.slice.call(objEls).map(function(el,i){
-								return new MultiDrag.Obj(el,{parent:targetAreaEl});
+							objs = Array.prototype.slice.call(objEls).map(function(element,i){
+								return new MultiDrag.Obj(element,{parent:targetAreaEl});
 							});
 
-							targets = Array.prototype.slice.call(targetEls).map(function(el,i){
-								return new MultiDrag.Target(el,objs,{
+							targets = Array.prototype.slice.call(targetEls).map(function(element,i){
+								return new MultiDrag.Target(element,objs,{
 									parent:targetAreaEl,
 									onAdd:function(obj){
-										MultiDrag.util.addClass(obj.el,classForTargets[i]);
+										MultiDrag.util.addClass(obj.element,classForTargets[i]);
 									},
 									onRemove:function(obj){
-										MultiDrag.util.removeClass(obj.el,classForTargets[i]);
+										MultiDrag.util.removeClass(obj.element,classForTargets[i]);
 									}
 								});
 							});
@@ -854,22 +854,22 @@ timeWaitForRefresh : 500
 							targetEls = targetAreaEl.getElementsByClassName("target"),
 							objEls = targetAreaEl.getElementsByClassName("obj");
 
-							objs = Array.prototype.slice.call(objEls).map(function(el,i){
-								return new MultiDrag.Obj(el,{parent:targetAreaEl});
+							objs = Array.prototype.slice.call(objEls).map(function(element,i){
+								return new MultiDrag.Obj(element,{parent:targetAreaEl});
 							});
 
-							targets = Array.prototype.slice.call(targetEls).map(function(el,i){
-								var target = new MultiDrag.Target(el,objs,{
+							targets = Array.prototype.slice.call(targetEls).map(function(element,i){
+								var target = new MultiDrag.Target(element,objs,{
 									parent:targetAreaEl,
 									positioning:MultiDrag.positionFactory(MultiDrag.positionType.notCrossing)(function(){
 										return target.getRectangle();
 									}),
 									sorting:MultiDrag.sortingFactory(MultiDrag.positionType.notCrossing)(),
 									onAdd:function(obj){
-										MultiDrag.util.addClass(obj.el,"ontarget");
+										MultiDrag.util.addClass(obj.element,"ontarget");
 									},
 									onRemove:function(obj){
-										MultiDrag.util.removeClass(obj.el,"ontarget");
+										MultiDrag.util.removeClass(obj.element,"ontarget");
 									}
 								});
 								return target;
@@ -1063,10 +1063,10 @@ fillStyle:"rgba(150,255,50,0.8)"
 					<code>boundOnLine(LP1, LP2, P)</code> - переносить задану точку  <code>P</code> на пряму <code>LP1, LP2</code> шляхом відкладання перпендикуляра на пряму <br/>
 					<code>getPointInLine(LP1, LP2, percent)</code> - знаходить точку на відрізку яка знаходиться на відстані <code>percent*(LP2-LP1)</code> від першої точки <br/>
 					<code>getPointInLineByLenght(LP1, LP2, lenght)</code> - знаходить точку на відрізку яка знаходиться на відстані <code>lenght</code> від першої точки <br/>
-					<code>createRectangleFromElement(el,parent,isContentBoxSize,isConsiderTranslate)</code> - створює прямокутник на основі лайоуту елемента,
+					<code>createRectangleFromElement(element,parent,isContentBoxSize,isConsiderTranslate)</code> - створює прямокутник на основі лайоуту елемента,
 						центр декартової системи задає верхній лівий кут <code>parent</code>-а,isContentBoxSize - прапор який включає в розміри прямокутника padding та border,
 						isConsiderTranslate - прапор врахування css властивостей -webkit-translate  при знаходженні позиції<br/>
-					<code>getSizeOfElement(el,isContentBoxSize)</code> - знаходить розміри елемента <br/>
+					<code>getSizeOfElement(element,isContentBoxSize)</code> - знаходить розміри елемента <br/>
 					<code>getOffset(element,parent,isConsiderTranslate)</code> - знаходить позицію елемента <br/>
 					<code>getPointFromRadialSystem(angle,length,center)</code> - переводить в декартову ситсему, точку заданою полярною системою <br/>
 					<code>addPointToBoundPoints(boundpoints,point,isRight)</code> - використовується для "soft"-ого флоата елементів <br/>
@@ -1150,7 +1150,12 @@ fillStyle:"rgba(150,255,50,0.8)"
 		</div>
 	</section>
 
-
+	<footer class="footer">
+		<p class="pull-right"><a href="#">Back to top</a></p>
+		<p>
+			Designed by Vitaliy Yarovuy (vitaliy.yarovuy@qa-power.com)
+		</p>
+    </footer>
 </div>
 
 <script id="codeViewTemplate" type="text/template">

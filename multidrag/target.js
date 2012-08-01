@@ -1,27 +1,26 @@
-(function (global, MultiDrag, undefined){
+(function(global, MultiDrag, undefined){
 	'use strict';
 
-	var targets =[],
-	Target = function(el,objs,options){
+	var targets = [], Target = function(element, objs, options){
 		options = options || {};
-		var i,parent = options.parent || MultiDrag.util.getDafaultParent(el);
+		var i, parent = options.parent || MultiDrag.util.getDafaultParent(element);
 		this.options = {
-			timeEnd:200,
-			timeExcange:400,
-			isReCalculateRectangle:false,
-			parent:parent,
-			isChangeHtmlParent:false,
-			sorting: MultiDrag.sortingFactory(MultiDrag.positionType.floatLeft)(80,mathPoint.getLength({x:1,y:4,IsTransformationSpace:true})),
-			positioning : MultiDrag.positionFactory(MultiDrag.positionType.floatLeft)(MultiDrag.util.bind(this.getRectangle,this),{isRemove:true})
+			timeEnd: 200,
+			timeExcange: 400,
+			isReCalculateRectangle: false,
+			parent: parent,
+			isChangeHtmlParent: false,
+			sorting: MultiDrag.sortingFactory(MultiDrag.positionType.floatLeft)(80, mathPoint.getLength({x: 1, y: 4, IsTransformationSpace: true})),
+			positioning: MultiDrag.positionFactory(MultiDrag.positionType.floatLeft)(MultiDrag.util.bind(this.getRectangle, this), {isRemove: true})
 		};
-		for (i in options){
+		for(i in options){
 			this.options[i] = options[i];
 		}
 		targets.push(this);
-		this.el = el;
+		this.element = element;
 		this.objs = objs;
-		this.onAdd = MultiDrag.util.triggerFactory({context:this});
-		this.onRemove = MultiDrag.util.triggerFactory({context:this});
+		this.onAdd = MultiDrag.util.triggerFactory({context: this});
+		this.onRemove = MultiDrag.util.triggerFactory({context: this});
 		if(options.onRemove){
 			this.onRemove.add(options.onRemove);
 		}
@@ -34,94 +33,90 @@
 
 	Target.prototype.getRectangle = function(){
 		if(!this._rectangle || this.options.isReCalculateRectangle || this.options.isChangeHtmlParent){
-			this._rectangle = mathPoint.createRectangleFromElement(this.el,this.options.parent,this.options.isContentBoxSize,true);
+			this._rectangle = mathPoint.createRectangleFromElement(this.element, this.options.parent, this.options.isContentBoxSize, true);
 		}
 		return this._rectangle;
 	};
 
 	Target.prototype.init = function(){
-		var objsRectagles,indexesOfNew;
+		var objsRectagles, indexesOfNew;
 		this.objOnMoveDictionary = MultiDrag.util.dictionFactory();
 		this.innerObjs = this.objs.filter(function(obj){
-			var el = obj.el.parentNode;
-			while( el ){
-				if(el === this.el ){
+			var element = obj.element.parentNode;
+			while(element){
+				if(element === this.element){
 					return true;
 				}
-				el = el.parentNode;
+				element = element.parentNode;
 			}
 			return false;
-		},this);
+		}, this);
 		if(this.innerObjs.length){
 			indexesOfNew = MultiDrag.util.range(this.innerObjs.length);
 			objsRectagles = this.options.positioning(this.innerObjs.map(function(obj){
 				return obj.getRectangle();
-			}),indexesOfNew);
-			this.setPosition(objsRectagles,indexesOfNew);
+			}), indexesOfNew);
+			this.setPosition(objsRectagles, indexesOfNew);
 			this.innerObjs.forEach(function(obj){
 				this.onAdd.fire(obj);
-			},this);
+			}, this);
 		}
 	};
 
 	Target.prototype.refresh = function(){
 		var objsRectagles = this.options.positioning(this.innerObjs.map(function(obj){
 			return obj.getRectangle();
-		}),[]);
-		this.setPosition(objsRectagles,[]);
+		}), []);
+		this.setPosition(objsRectagles, []);
 	};
 
 	Target.prototype.onEnd = function(obj){
-		var newObjsIndex=[],objsRectagles,isOn = this.getRectangle().isOn(obj.getCenter());
+		var newObjsIndex = [], objsRectagles, isOn = this.getRectangle().isOn(obj.getCenter());
 		if(!isOn){
 			return false;
 		}
-		this.innerObjs = this.options.sorting(this.innerObjs,[obj],newObjsIndex);
+		this.innerObjs = this.options.sorting(this.innerObjs, [obj], newObjsIndex);
 		objsRectagles = this.options.positioning(this.innerObjs.map(function(obj){
 			return obj.getRectangle();
-		}),newObjsIndex);
+		}), newObjsIndex);
 
-		this.setPosition(objsRectagles,newObjsIndex);
+		this.setPosition(objsRectagles, newObjsIndex);
 		if(this.innerObjs.indexOf(obj) !== -1){
 			this.addRemoveOnMOve(obj);
 		}
 		return true;
 	};
 
-	Target.prototype.setPosition = function(rectangles,indexesOfNew,time){
-		this.innerObjs.slice(0).forEach(function(obj,i){
-			var rect = rectangles[i],that = this,
-			timeEnd = time !== undefined ? time :
-						indexesOfNew.indexOf(i) !== -1 ?
-							this.options.timeEnd :
-							this.options.timeExcange;
+	Target.prototype.setPosition = function(rectangles, indexesOfNew, time){
+		this.innerObjs.slice(0).forEach(function(obj, i){
+			var rect = rectangles[i], that = this, timeEnd = time || time == 0 ? time : indexesOfNew.indexOf(i) !== -1 ? this.options.timeEnd : this.options.timeExcange;
 			if(rect.isRemove){
-				obj.move(obj.initPosition,timeEnd,true,true);
-				MultiDrag.util.remove(this.innerObjs,obj);
+				obj.move(obj.initPosition, timeEnd, true, true);
+				MultiDrag.util.remove(this.innerObjs, obj);
 				if(this.options.isChangeHtmlParent && obj._initialParent){
-					setTimeout(function (){
+					setTimeout(function(){
 						obj.changeHtmlParent(obj._initialParent);
 					}, time + 10);
 				}
 				this.onRemove.fire(obj);
 			}else{
-				obj.move(rect.position,timeEnd,true,true);
+				obj.move(rect.position, timeEnd, true, true);
 				if(this.options.isChangeHtmlParent){
 					setTimeout(function(){
-						obj.changeHtmlParent(that.el);
-					},time+10);
+						obj.changeHtmlParent(that.element);
+					}, time + 10);
 				}
 			}
-		},this);
+		}, this);
 	};
 
-	Target.prototype.add = function(obj,time){
-		var objsRectagles,newObjsIndex=this.innerObjs.length;
+	Target.prototype.add = function(obj, time){
+		var objsRectagles, newObjsIndex = this.innerObjs.length;
 		this.innerObjs.push(obj);
 		objsRectagles = this.options.positioning(this.innerObjs.map(function(obj){
 			return obj.getRectangle();
-		}),newObjsIndex);
-		this.setPosition(objsRectagles,[newObjsIndex],time||0);
+		}), newObjsIndex);
+		this.setPosition(objsRectagles, [newObjsIndex], time || 0);
 		if(this.innerObjs.indexOf(obj) !== -1){
 			this.addRemoveOnMOve(obj);
 		}
@@ -129,35 +124,33 @@
 
 	Target.prototype.addRemoveOnMOve = function(obj){
 		var that = this;
-		obj.onMove.add(
-			this.objOnMoveDictionary.setValue(obj,function(){
-				return that.remove(this);
-			})
-		);
+		obj.onMove.add(this.objOnMoveDictionary.setValue(obj, function(){
+			return that.remove(this);
+		}));
 		this.onAdd.fire(obj);
 	};
 
 	Target.prototype.remove = function(obj){
-		var index,objsRectagles;
+		var index, objsRectagles;
 		obj.onMove.remove(this.objOnMoveDictionary.remove(obj));
 		index = this.innerObjs.indexOf(obj);
-		if( index === -1){
+		if(index === -1){
 			return;
 		}
-		this.innerObjs.splice(index,1);
+		this.innerObjs.splice(index, 1);
 		objsRectagles = this.options.positioning(this.innerObjs.map(function(obj){
 			return obj.getRectangle();
-		}),[]);
-		this.setPosition(objsRectagles,[]);
+		}), []);
+		this.setPosition(objsRectagles, []);
 		this.onRemove.fire(obj);
 	};
 
 	Target.prototype.reset = function(){
 		this.innerObjs.forEach(function(obj){
-			obj.move(obj.initPosition,0,true,true);
+			obj.move(obj.initPosition, 0, true, true);
 			this.onRemove.fire(obj);
-		},this);
-		this.innerObjs=[];
+		}, this);
+		this.innerObjs = [];
 	}
 
 	Target.prototype.getSortedObjs = function(){

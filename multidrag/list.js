@@ -1,41 +1,42 @@
-(function (global, MultiDrag){
+(function(global, MultiDrag){
 	'use strict';
-	var lists = [],listFactory,
-	List = function (objs, options){
+	var lists = [], listFactory, List = function(objs, options){
 		var i;
 		this.options = {
-			timeEnd:200,
-			timeExcange:400,
-			radius:30,
-			getLength:mathPoint.getLength()
+			timeEnd: 200,
+			timeExcange: 400,
+			radius: 30,
+			getLength: mathPoint.getLength()
 		};
 		for(i in options){
-			this.options[i] = options[i];
+			if(options.hasOwnProperty(i)){
+				this.options[i] = options[i];
+			}
 		}
 		this.objs = objs
 		lists.push(this);
-		this.onChange = MultiDrag.util.triggerFactory({context:this});
+		this.onChange = MultiDrag.util.triggerFactory({context: this});
 		if(options && options.onChange){
 			this.onChange.add(options.onChange);
 		}
 		this.init();
 	}
 
-	List.prototype.init = function (){
+	List.prototype.init = function(){
 		var that = this;
-		this.objs.forEach(function (obj){
-			obj.onEnd.add(function (){
+		this.objs.forEach(function(obj){
+			obj.onEnd.add(function(){
 				that.onEnd(this);
 				return true;
 			});
 		});
 	}
 
-	List.prototype.onEnd = function (obj){
+	List.prototype.onEnd = function(obj){
 		var fixPositions = this.getCurrentFixPosition(), currentIndex, excangeIndex;
 		currentIndex = this.objs.indexOf(obj);
-		excangeIndex = mathPoint.indexOfNearPoint(fixPositions, obj.position, this.options.radius,this.options.getLength);
-		if(excangeIndex == -1 || excangeIndex === currentIndex){
+		excangeIndex = mathPoint.indexOfNearPoint(fixPositions, obj.position, this.options.radius, this.options.getLength);
+		if(excangeIndex === -1 || excangeIndex === currentIndex){
 			obj.move(obj.fixPosition, this.options.timeEnd, true);
 		}else{
 			if(this.objs[excangeIndex].isMultiDrag){
@@ -49,25 +50,26 @@
 		return true;
 	}
 
-	List.prototype.getCurrentFixPosition = function (){
-		return this.objs.map(function (obj){
+	List.prototype.getCurrentFixPosition = function(){
+		return this.objs.map(function(obj){
 			return obj.fixPosition.clone();
 		});
 	}
 
 	List.prototype.getSortedObjs = function(){
-		return this.objs.map(function(obj){
-			return 	obj.initPosition;
-		}).map(function(position){
-			return this.objs.filter(function(obj){
-				return obj.fixPosition.compare(position);
-			},this)[0];
-		},this);
+		return this.objs.map(
+				function(obj){
+					return	 obj.initPosition;
+				}).map(function(position){
+						   return this.objs.filter(function(obj){
+							   return obj.fixPosition.compare(position);
+						   }, this)[0];
+					   }, this);
 	}
 
 	List.prototype.reset = function(){
 		this.objs.forEach(function(obj){
-			obj.move(obj.initPosition,0,true,false);
+			obj.move(obj.initPosition, 0, true, false);
 		});
 	}
 
@@ -77,16 +79,16 @@
 		});
 	}
 
-	List.prototype.__defineGetter__("positions", function() {
+	List.prototype.__defineGetter__("positions", function(){
 		return this.getCurrentFixPosition();
 	});
 
-	List.prototype.__defineSetter__("positions", function(positions) {
+	List.prototype.__defineSetter__("positions", function(positions){
 		var message = "wrong array length";
 		if(positions.length === this.objs.length){
-			positions.forEach(function(point,i){
-				this.objs[i].move(point,0,true,true);
-			},this);
+			positions.forEach(function(point, i){
+				this.objs[i].move(point, 0, true, true);
+			}, this);
 		}else{
 			alert(message);
 			throw message;
@@ -94,19 +96,19 @@
 	});
 
 
-	listFactory = function(el,objsElements,options){
-		var objs,objOptions,listOptions;
+	listFactory = function(element, objsElements, options){
+		var objs, objOptions, listOptions;
 		options = options || {};
 		objOptions = options.obj || {};
 		listOptions = options.list || {};
-		objOptions.parent = objOptions.parent || el;
-		objsElements=Array.prototype.slice.call(objsElements);
+		objOptions.parent = objOptions.parent || element;
+		objsElements = Array.prototype.slice.call(objsElements);
 
-		objs = objsElements.map(function(el){
-			return new MultiDrag.Obj(el,objOptions);
+		objs = objsElements.map(function(element){
+			return new MultiDrag.Obj(element, objOptions);
 		});
 
-		return new List(objs,listOptions);
+		return new List(objs, listOptions);
 	}
 
 
